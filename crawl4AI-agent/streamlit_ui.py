@@ -6,7 +6,7 @@ import os
 import streamlit as st
 import json
 import logfire
-from supabase import Client
+from supabase import Client, create_client
 from openai import AsyncOpenAI
 
 # Import all the message part classes
@@ -28,11 +28,23 @@ from pydantic_ai_expert import pydantic_ai_expert, PydanticAIDeps
 from dotenv import load_dotenv
 load_dotenv()
 
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-supabase: Client = Client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")
+openai_api_url = os.getenv("OPENAI_API_URL")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+
+# OpenAI setup
+openai_client = AsyncOpenAI(
+    base_url=openai_api_url,
+    api_key=openai_api_key
 )
+
+# Supabase setup
+supabase: Client = create_client(
+    supabase_url,
+    supabase_key
+)
+
 
 # Configure logfire to suppress warnings (optional)
 logfire.configure(send_to_logfire='never')

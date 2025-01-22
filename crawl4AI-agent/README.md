@@ -38,10 +38,13 @@ pip install -r requirements.txt
    - Rename `.env.example` to `.env`
    - Edit `.env` with your API keys and preferences:
    ```env
+   OPENAI_API_URL=openai_url
    OPENAI_API_KEY=your_openai_api_key
    SUPABASE_URL=your_supabase_url
    SUPABASE_SERVICE_KEY=your_supabase_service_key
    LLM_MODEL=gpt-4o-mini  # or your preferred OpenAI model
+   EMBEDDING_MODEL=text-embedding-3-small  # Or your preferred embedding
+   EMBEDDING_DIMS=1536 # Or your embedding dimensions. Make sure to adjust the Supabase SQL accordingly
    ```
 
 ## Usage
@@ -54,6 +57,7 @@ Execute the SQL commands in `site_pages.sql` to:
 3. Set up Row Level Security policies
 
 In Supabase, do this by going to the "SQL Editor" tab and pasting in the SQL into the editor there. Then click "Run".
+Note: I you use an embedding other than "text-embedding-3-small", update the dimensions (1536) accordingly.
 
 ### Crawl Documentation
 

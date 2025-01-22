@@ -1,7 +1,6 @@
 from __future__ import annotations as _annotations
 
 from dataclasses import dataclass
-from dotenv import load_dotenv
 import logfire
 import asyncio
 import httpx
@@ -13,10 +12,20 @@ from openai import AsyncOpenAI
 from supabase import Client
 from typing import List
 
+# Load environment variables
+from dotenv import load_dotenv
 load_dotenv()
 
-llm = os.getenv('LLM_MODEL', 'gpt-4o-mini')
-model = OpenAIModel(llm)
+openai_api_url = os.getenv("OPENAI_API_URL")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+llm_model = os.getenv('LLM_MODEL', 'gpt-4o-mini')
+embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+embedding_dims = int(os.getenv("EMBEDDING_DIMS", "1536"))
+
+# OpenAI model setup
+model = OpenAIModel(model_name=llm_model,
+                    base_url=openai_api_url,
+                    api_key=openai_api_key)
 
 logfire.configure(send_to_logfire='if-token-present')
 
@@ -50,13 +59,13 @@ async def get_embedding(text: str, openai_client: AsyncOpenAI) -> List[float]:
     """Get embedding vector from OpenAI."""
     try:
         response = await openai_client.embeddings.create(
-            model="text-embedding-3-small",
+            model=embedding_model,
             input=text
         )
         return response.data[0].embedding
     except Exception as e:
         print(f"Error getting embedding: {e}")
-        return [0] * 1536  # Return zero vector on error
+        return [0] * embedding_dims  # Return zero vector on error
 
 @pydantic_ai_expert.tool
 async def retrieve_relevant_documentation(ctx: RunContext[PydanticAIDeps], user_query: str) -> str:
