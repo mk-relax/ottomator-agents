@@ -4,7 +4,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 from pydantic import BaseModel
-from dotenv import load_dotenv
 from openai import AsyncOpenAI
 from pathlib import Path
 import httpx
@@ -21,6 +20,7 @@ from pydantic_ai.messages import (
 from pydantic_ai_expert import pydantic_ai_expert, PydanticAIDeps
 
 # Load environment variables
+from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize FastAPI app
@@ -35,15 +35,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+openai_api_url = os.getenv("OPENAI_API_URL")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+
+# OpenAI setup
+openai_client = AsyncOpenAI(
+    base_url=openai_api_url,
+    api_key=openai_api_key
+)
 
 # Supabase setup
 supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")
+    supabase_url,
+    supabase_key
 )
 
-# OpenAI setup
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Request/Response Models
 class AgentRequest(BaseModel):

@@ -8,20 +8,35 @@ from typing import List, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from urllib.parse import urlparse
-from dotenv import load_dotenv
 
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from openai import AsyncOpenAI
 from supabase import create_client, Client
 
+# Load environment variables
+from dotenv import load_dotenv
 load_dotenv()
 
-# Initialize OpenAI and Supabase clients
-openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_SERVICE_KEY")
+openai_api_url = os.getenv("OPENAI_API_URL")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+llm_model = os.getenv('LLM_MODEL', 'gpt-4o-mini')
+embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+embedding_dims = int(os.getenv("EMBEDDING_DIMS", "1536"))
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+
+# OpenAI setup
+openai_client = AsyncOpenAI(
+    base_url=openai_api_url,
+    api_key=openai_api_key
 )
+
+# Supabase setup
+supabase: Client = create_client(
+    supabase_url,
+    supabase_key
+)
+
 
 @dataclass
 class ProcessedChunk:
@@ -88,7 +103,7 @@ async def get_title_and_summary(chunk: str, url: str) -> Dict[str, str]:
     
     try:
         response = await openai_client.chat.completions.create(
-            model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+            model=llm_model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"URL: {url}\n\nContent:\n{chunk[:1000]}..."}  # Send first 1000 chars for context
@@ -104,13 +119,13 @@ async def get_embedding(text: str) -> List[float]:
     """Get embedding vector from OpenAI."""
     try:
         response = await openai_client.embeddings.create(
-            model="text-embedding-3-small",
+            model=embedding_model,
             input=text
         )
         return response.data[0].embedding
     except Exception as e:
         print(f"Error getting embedding: {e}")
-        return [0] * 1536  # Return zero vector on error
+        return [0] * embedding_dims  # Return zero vector on error
 
 async def process_chunk(chunk: str, chunk_number: int, url: str) -> ProcessedChunk:
     """Process a single chunk of text."""
